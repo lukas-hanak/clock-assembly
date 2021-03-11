@@ -1,0 +1,459 @@
+proc_1                                                                                                                  PAGE 1
+                         1     org 0
+                         2
+                         3     ;
+                         4     ;       INIT
+                         5     ;
+                         6     zac:    mov     r0,#0 ;sekundy
+                         7             mov     r1,#0 ;minuty
+                         8             mov     r2,#0 ;hodiny
+                         9             mov     r3,#0 ;min budiku
+                        10             mov     r4,#0 ;hodin budiku
+                        11
+                        12             call    zobraz
+                        13             jmp     klavesnice
+                        14
+                        15     start:
+                        16             mov     a,p1    ;klavesnice
+                        17             cpl     a       ;negace p1 v acc
+                        18             cjne    a,#2,start_1
+                        19             jmp     zobrat_min_sek
+                        20
+                        21     start_1:
+                        22             call    zobraz  ;zobrazime hodiny
+                        23             ; na konci podprogramu zobraz skaceme na start_2
+                        24
+                        25     start_bud_1:
+                        26             cjne    a,#5,start_bud_2
+                        27             call    zobraz
+                        28
+                        29     start_bud_2:
+                        30             cjne    a,#5,zobraz_budik
+                        31             jmp     zobraz_budik_pr
+                        32
+                        33     start_2:
+                        34             jmp     vypocet
+                        35             call    zp      ;zpomalime
+                        36             ;sekundy
+                        37             inc     r0      ;sekundy + 1
+                        38             cjne    r0,#60,start
+                        39             mov     r0,#0
+                        40             ;minuty
+                        41             inc     r1
+                        42             cjne    r1,#60,start
+                        43             mov     r1,#0
+                        44             ;hodiny
+                        45             inc     r2
+                        46             cjne    r2,#24,start
+                        47             mov     r2,#0
+                        48
+                        49             jmp     start
+                        50
+                        51     vypocet:
+                        52             ;hodiny
+                        53             mov     a,r2    ;hodiny
+                        54             mov     b,r4    ;hodiny budiku
+                        55
+                        56             clr     cy      ;vynulovani cy
+                        57             subb    a,b     ;a-b-cy
+                        58             jnz     start_2
+                        59
+                        60             ;minuty
+                        61             mov     a,r1    ;min
+                        62             mov     b,r3    ;minuty budiku
+                        63             clr     cy      ;vynulovani cy
+                        64             subb    a,b     ;a-b-c
+                        65             jnz     blikani
+                        66
+                        67     blikani:
+                        68             jnb     p1.3,start      ; bit 3 = kl 8
+                        69             mov     p3,#00111111b
+                        70             mov     p3,#00101111b
+                        71             mov     p3,#00011111b
+                        72             mov     p3,#00001111b
+                        73             call    zp
+                        74             call    zobraz
+                        75             call    zp
+                        76             jmp     blikani
+                        77     ;
+                        78     ;       NASTAVENI
+                        79     ;
+                        80     nastav_minut:
+                        81             inc     r1
+                        82             call    zobraz
+                        83             cjne    r1,#59,nas_1
+                        84             mov     r1,#255
+                        85     nas_1:  jmp     klavesnice
+                        86
+                        87     nastav_hodin:
+                        88             inc     r2
+                        89             call    zobraz
+                        90             cjne    r2,#23,nas_2
+                        91             mov     r2,#255
+                        92     nas_2:  jmp     klavesnice
+                        93
+                        94     nastav_min_budiku:
+                        95             inc     r3
+                        96             call    zobraz_budik
+                        97             cjne    r3,#59,nas_3
+                        98             mov     r3,#255
+                        99     nas_3:  jmp     klavesnice
+                       100
+                       101     nastav_hod_budiku:
+                       102             inc     r4
+                       103             call    zobraz_budik
+                       104             cjne    r4,#23,nas_4
+                       105             mov     r4,#255
+                       106     nas_4:  jmp     klavesnice
+                       107
+                       108     ;
+                       109     ;       ZOBRAZENI
+                       110     ;
+                       111     zobraz_budik:
+                       112             ; r4 - hodiny budiku
+                       113             mov     a,r4
+                       114             mov     a,b
+                       115             orl     a,#00110000b
+                       116             mov     p3,a
+                       117
+                       118             mov     p3,a
+                       119             mov     a,b
+                       120             orl     a,#00100000b
+                       121             mov     p3,a
+                       122
+                       123             ; r3 - minuty budiku
+                       124             mov     a,r3
+                       125             mov     b,#10
+                       126             div     ab
+                       127             orl     a,#00010000b
+                       128             mov     p3,a
+                       129             mov     a,b
+                       130             orl     a,#00000000b
+                       131             mov     p3,a
+                       132             ret
+                       133
+                       134     zobraz_budik_pr:
+                       135             ; r4 - hodiny budiku
+                       136             mov     a,r4
+                       137             mov     a,b
+                       138             orl     a,#00110000b
+                       139             mov     p3,a
+                       140
+                       141             mov     p3,a
+                       142             mov     a,b
+                       143             orl     a,#00100000b
+                       144             mov     p3,a
+                       145
+                       146             ; r3 - minuty budiku
+                       147             mov     a,r1
+                       148             mov     b,#10
+                       149             div     ab
+                       150             orl     a,#00010000b
+                       151             mov     p3,a
+                       152             mov     a,b
+                       153             orl     a,#00000000b
+                       154             mov     p3,a
+                       155
+                       156     zobrat_min_sek:
+                       157             ; r1 - minuty
+                       158             mov     a,r1
+                       159             mov     a,b
+                       160             orl     a,#00110000b
+                       161             mov     p3,a
+                       162             mov     p3,a
+                       163             mov     a,b
+                       164             orl     a,#00100000b
+                       165             mov     p3,a
+                       166
+                       167             ; r0 - sekundy
+                       168             mov     a,r0
+                       169             mov     b,#10
+                       170             div     ab
+                       171             orl     a,#00010000b
+                       172             mov     p3,a
+                       173             mov     a,b
+                       174             orl     a,#00000000b
+                       175             mov     p3,a
+                       176             ret
+                       177
+                       178     zobraz:
+                       179             ; r2 - hodiny
+                       180             mov     a,r2
+                       181             mov     a,b
+                       182             orl     a,#00110000b
+                       183             mov     p3,a
+                       184
+                       185             mov     p3,a
+                       186             mov     a,b
+                       187             orl     a,#00100000b
+                       188             mov     p3,a
+                       189
+                       190             ; r1 - minuty
+                       191             mov     a,r1
+                       192             mov     b,#10
+                       193             div     ab
+                       194             orl     a,#00010000b
+                       195             mov     p3,a
+                       196             mov     a,b
+                       197             orl     a,#00000000b
+                       198             mov     p3,a
+                       199             jmp     start_2
+                       200
+                       201     ;
+                       202     ;       KLAVESNICE
+                       203     ;
+                       204     klavesnice:
+                       205             ;jnb    p1.0,nastav_minut
+                       206             ;jnb    p1.2,nastav_hodin
+                       207             ;jmp    klavesnice
+                       208             ;nastav_min_budiku
+                       209             ;nastav_hod_budiku
+                       210             ;nulovani
+                       211             ;start hod
+                       212             mov     a,p1 ;prectu klavesnice v portu p1
+                       213             cpl     a    ;negace acc
+                       214             cjne    a,#1,kl_1
+****ERROR: Symbol not defined: kl_1
+                       215             call    nastav_minut
+                       216
+                       217     kl_2:   cjne    a,#4,kl_3
+                       218             call    nastav_hodin
+                       219
+                       220     kl_3:   cjne    a,#3,kl_4
+                       221             call    nastav_min_budiku
+                       222
+                       223     kl_4:   cjne    a,#6,kl_5
+                       224             call    nastav_hod_budiku
+                       225
+                       226     kl_5:   cjne    a,#32,kl_6
+                       227             jmp     zac     ;nulovani
+                       228
+                       229     kl_6:   cjne    a,#16,kl_7
+                       230             jmp     start
+                       231
+                       232     kl_7:   jmp     klavesnice
+                       233
+                       234
+                       235     ;
+                       236     ;       ZPOMALENI
+                       237     ;
+                       238     zp:     djnz    r7,$
+                       239             djnz    r6,$-2
+                       240             ret
+                       241
+                       242             end
+ASSEMBLY COMPLETE, 1 ERROR FOUND, NO WARNINGS
+
+
+ERROR SUMMARY:
+Line 214, ERROR: Symbol not defined: kl_1
+
+SYMBOL TABLE:
+??MCU_8051_IDE . . . . . . . . . . .  N  NUMB  8051H  NOT USED
+??VERSION. . . . . . . . . . . . . .  N  NUMB  0147H  NOT USED
+AC . . . . . . . . . . . . . . . . .  B  ADDR  00D6H  NOT USED
+ACC. . . . . . . . . . . . . . . . .  D  ADDR  00E0H  NOT USED
+ACSR . . . . . . . . . . . . . . . .  D  ADDR  0097H  NOT USED
+ADCF . . . . . . . . . . . . . . . .  D  ADDR  00F6H  NOT USED
+ADCLK. . . . . . . . . . . . . . . .  D  ADDR  00F2H  NOT USED
+ADCON. . . . . . . . . . . . . . . .  D  ADDR  00F3H  NOT USED
+ADDH . . . . . . . . . . . . . . . .  D  ADDR  00F5H  NOT USED
+ADDL . . . . . . . . . . . . . . . .  D  ADDR  00F4H  NOT USED
+AUXR . . . . . . . . . . . . . . . .  D  ADDR  008EH  NOT USED
+AUXR1. . . . . . . . . . . . . . . .  D  ADDR  00A2H  NOT USED
+B. . . . . . . . . . . . . . . . . .  D  ADDR  00F0H
+BDRCON . . . . . . . . . . . . . . .  D  ADDR  009BH  NOT USED
+BDRCON_1 . . . . . . . . . . . . . .  D  ADDR  009CH  NOT USED
+BLIKANI. . . . . . . . . . . . . . .  C  ADDR  0054H
+BRL. . . . . . . . . . . . . . . . .  D  ADDR  009AH  NOT USED
+CCAP0H . . . . . . . . . . . . . . .  D  ADDR  00FAH  NOT USED
+CCAP0L . . . . . . . . . . . . . . .  D  ADDR  00EAH  NOT USED
+CCAP1H . . . . . . . . . . . . . . .  D  ADDR  00FBH  NOT USED
+CCAP1L . . . . . . . . . . . . . . .  D  ADDR  00EBH  NOT USED
+CCAP2H . . . . . . . . . . . . . . .  D  ADDR  00FCH  NOT USED
+CCAP3H . . . . . . . . . . . . . . .  D  ADDR  00FDH  NOT USED
+CCAP4H . . . . . . . . . . . . . . .  D  ADDR  00FEH  NOT USED
+CCAPL2H. . . . . . . . . . . . . . .  D  ADDR  00FCH  NOT USED
+CCAPL2L. . . . . . . . . . . . . . .  D  ADDR  00ECH  NOT USED
+CCAPL3H. . . . . . . . . . . . . . .  D  ADDR  00FDH  NOT USED
+CCAPL3L. . . . . . . . . . . . . . .  D  ADDR  00EDH  NOT USED
+CCAPL4H. . . . . . . . . . . . . . .  D  ADDR  00FEH  NOT USED
+CCAPL4L. . . . . . . . . . . . . . .  D  ADDR  00EEH  NOT USED
+CCAPM0 . . . . . . . . . . . . . . .  D  ADDR  00DAH  NOT USED
+CCAPM1 . . . . . . . . . . . . . . .  D  ADDR  00DBH  NOT USED
+CCAPM2 . . . . . . . . . . . . . . .  D  ADDR  00DCH  NOT USED
+CCAPM3 . . . . . . . . . . . . . . .  D  ADDR  00DDH  NOT USED
+CCAPM4 . . . . . . . . . . . . . . .  D  ADDR  00DEH  NOT USED
+CCF0 . . . . . . . . . . . . . . . .  B  ADDR  00D8H  NOT USED
+CCF1 . . . . . . . . . . . . . . . .  B  ADDR  00D9H  NOT USED
+CCF2 . . . . . . . . . . . . . . . .  B  ADDR  00DAH  NOT USED
+CCF3 . . . . . . . . . . . . . . . .  B  ADDR  00DBH  NOT USED
+CCF4 . . . . . . . . . . . . . . . .  B  ADDR  00DCH  NOT USED
+CCON . . . . . . . . . . . . . . . .  D  ADDR  00D8H  NOT USED
+CFINT. . . . . . . . . . . . . . . .  C  ADDR  0033H  NOT USED
+CH . . . . . . . . . . . . . . . . .  D  ADDR  00F9H  NOT USED
+CKCON. . . . . . . . . . . . . . . .  D  ADDR  008FH  NOT USED
+CKCON0 . . . . . . . . . . . . . . .  D  ADDR  008FH  NOT USED
+CKRL . . . . . . . . . . . . . . . .  D  ADDR  0097H  NOT USED
+CKSEL. . . . . . . . . . . . . . . .  D  ADDR  0085H  NOT USED
+CL . . . . . . . . . . . . . . . . .  D  ADDR  00E9H  NOT USED
+CLKREG . . . . . . . . . . . . . . .  D  ADDR  008FH  NOT USED
+CMOD . . . . . . . . . . . . . . . .  D  ADDR  00D9H  NOT USED
+CPRL2. . . . . . . . . . . . . . . .  B  ADDR  00C8H  NOT USED
+CR . . . . . . . . . . . . . . . . .  B  ADDR  00DEH  NOT USED
+CT2. . . . . . . . . . . . . . . . .  B  ADDR  00C9H  NOT USED
+CY . . . . . . . . . . . . . . . . .  B  ADDR  00D7H
+DP0H . . . . . . . . . . . . . . . .  D  ADDR  0083H  NOT USED
+DP0L . . . . . . . . . . . . . . . .  D  ADDR  0082H  NOT USED
+DP1H . . . . . . . . . . . . . . . .  D  ADDR  0085H  NOT USED
+DP1L . . . . . . . . . . . . . . . .  D  ADDR  0084H  NOT USED
+DPH. . . . . . . . . . . . . . . . .  D  ADDR  0083H  NOT USED
+DPL. . . . . . . . . . . . . . . . .  D  ADDR  0082H  NOT USED
+EA . . . . . . . . . . . . . . . . .  B  ADDR  00AFH  NOT USED
+EC . . . . . . . . . . . . . . . . .  B  ADDR  00AEH  NOT USED
+EECON. . . . . . . . . . . . . . . .  D  ADDR  0096H  NOT USED
+ES . . . . . . . . . . . . . . . . .  B  ADDR  00ACH  NOT USED
+ET0. . . . . . . . . . . . . . . . .  B  ADDR  00A9H  NOT USED
+ET1. . . . . . . . . . . . . . . . .  B  ADDR  00ABH  NOT USED
+ET2. . . . . . . . . . . . . . . . .  B  ADDR  00ADH  NOT USED
+EX0. . . . . . . . . . . . . . . . .  B  ADDR  00A8H  NOT USED
+EX1. . . . . . . . . . . . . . . . .  B  ADDR  00AAH  NOT USED
+EXEN2. . . . . . . . . . . . . . . .  B  ADDR  00CBH  NOT USED
+EXF2 . . . . . . . . . . . . . . . .  B  ADDR  00CEH  NOT USED
+EXTI0. . . . . . . . . . . . . . . .  C  ADDR  0003H  NOT USED
+EXTI1. . . . . . . . . . . . . . . .  C  ADDR  0013H  NOT USED
+F0 . . . . . . . . . . . . . . . . .  B  ADDR  00D5H  NOT USED
+FE . . . . . . . . . . . . . . . . .  B  ADDR  009FH  NOT USED
+IE . . . . . . . . . . . . . . . . .  D  ADDR  00A8H  NOT USED
+IE0. . . . . . . . . . . . . . . . .  B  ADDR  0089H  NOT USED
+IE1. . . . . . . . . . . . . . . . .  B  ADDR  008BH  NOT USED
+INT0 . . . . . . . . . . . . . . . .  B  ADDR  00B2H  NOT USED
+INT1 . . . . . . . . . . . . . . . .  B  ADDR  00B3H  NOT USED
+IP . . . . . . . . . . . . . . . . .  D  ADDR  00B8H  NOT USED
+IPH. . . . . . . . . . . . . . . . .  D  ADDR  00B7H  NOT USED
+IPH0 . . . . . . . . . . . . . . . .  D  ADDR  00B7H  NOT USED
+IPH1 . . . . . . . . . . . . . . . .  D  ADDR  00B3H  NOT USED
+IPL0 . . . . . . . . . . . . . . . .  D  ADDR  00B8H  NOT USED
+IPL1 . . . . . . . . . . . . . . . .  D  ADDR  00B2H  NOT USED
+IT0. . . . . . . . . . . . . . . . .  B  ADDR  0088H  NOT USED
+IT1. . . . . . . . . . . . . . . . .  B  ADDR  008AH  NOT USED
+KBE. . . . . . . . . . . . . . . . .  D  ADDR  009DH  NOT USED
+KBF. . . . . . . . . . . . . . . . .  D  ADDR  009EH  NOT USED
+KBLS . . . . . . . . . . . . . . . .  D  ADDR  009CH  NOT USED
+KLAVESNICE . . . . . . . . . . . . .  C  ADDR  011AH
+KL_2 . . . . . . . . . . . . . . . .  C  ADDR  0122H  NOT USED
+KL_3 . . . . . . . . . . . . . . . .  C  ADDR  0127H
+KL_4 . . . . . . . . . . . . . . . .  C  ADDR  012CH
+KL_5 . . . . . . . . . . . . . . . .  C  ADDR  0131H
+KL_6 . . . . . . . . . . . . . . . .  C  ADDR  0136H
+KL_7 . . . . . . . . . . . . . . . .  C  ADDR  013BH
+NASTAV_HODIN . . . . . . . . . . . .  C  ADDR  007AH
+NASTAV_HOD_BUDIKU. . . . . . . . . .  C  ADDR  0092H
+NASTAV_MINUT . . . . . . . . . . . .  C  ADDR  006EH
+NASTAV_MIN_BUDIKU. . . . . . . . . .  C  ADDR  0086H
+NAS_1. . . . . . . . . . . . . . . .  C  ADDR  0077H
+NAS_2. . . . . . . . . . . . . . . .  C  ADDR  0083H
+NAS_3. . . . . . . . . . . . . . . .  C  ADDR  008FH
+NAS_4. . . . . . . . . . . . . . . .  C  ADDR  009BH
+OSCCON . . . . . . . . . . . . . . .  D  ADDR  0086H  NOT USED
+OV . . . . . . . . . . . . . . . . .  B  ADDR  00D2H  NOT USED
+P. . . . . . . . . . . . . . . . . .  B  ADDR  00D0H  NOT USED
+P0 . . . . . . . . . . . . . . . . .  D  ADDR  0080H  NOT USED
+P1 . . . . . . . . . . . . . . . . .  D  ADDR  0090H
+P1M1 . . . . . . . . . . . . . . . .  D  ADDR  00D4H  NOT USED
+P1M2 . . . . . . . . . . . . . . . .  D  ADDR  00E2H  NOT USED
+P2 . . . . . . . . . . . . . . . . .  D  ADDR  00A0H  NOT USED
+P3 . . . . . . . . . . . . . . . . .  D  ADDR  00B0H
+P3M1 . . . . . . . . . . . . . . . .  D  ADDR  00D5H  NOT USED
+P3M2 . . . . . . . . . . . . . . . .  D  ADDR  00E3H  NOT USED
+P4 . . . . . . . . . . . . . . . . .  D  ADDR  00C0H  NOT USED
+P4M1 . . . . . . . . . . . . . . . .  D  ADDR  00D6H  NOT USED
+P4M2 . . . . . . . . . . . . . . . .  D  ADDR  00E4H  NOT USED
+P5 . . . . . . . . . . . . . . . . .  D  ADDR  00E8H  NOT USED
+PC . . . . . . . . . . . . . . . . .  B  ADDR  00BEH  NOT USED
+PCON . . . . . . . . . . . . . . . .  D  ADDR  0087H  NOT USED
+PPCL . . . . . . . . . . . . . . . .  B  ADDR  00BEH  NOT USED
+PS . . . . . . . . . . . . . . . . .  B  ADDR  00BCH  NOT USED
+PSL. . . . . . . . . . . . . . . . .  B  ADDR  00BCH  NOT USED
+PSW. . . . . . . . . . . . . . . . .  D  ADDR  00D0H  NOT USED
+PT0. . . . . . . . . . . . . . . . .  B  ADDR  00B9H  NOT USED
+PT0L . . . . . . . . . . . . . . . .  B  ADDR  00B9H  NOT USED
+PT1. . . . . . . . . . . . . . . . .  B  ADDR  00BBH  NOT USED
+PT1L . . . . . . . . . . . . . . . .  B  ADDR  00BBH  NOT USED
+PT2. . . . . . . . . . . . . . . . .  B  ADDR  00BDH  NOT USED
+PT2L . . . . . . . . . . . . . . . .  B  ADDR  00BDH  NOT USED
+PX0. . . . . . . . . . . . . . . . .  B  ADDR  00B8H  NOT USED
+PX0L . . . . . . . . . . . . . . . .  B  ADDR  00B8H  NOT USED
+PX1. . . . . . . . . . . . . . . . .  B  ADDR  00BAH  NOT USED
+PX1L . . . . . . . . . . . . . . . .  B  ADDR  00BAH  NOT USED
+RB8. . . . . . . . . . . . . . . . .  B  ADDR  009AH  NOT USED
+RCAP2H . . . . . . . . . . . . . . .  D  ADDR  00CBH  NOT USED
+RCAP2L . . . . . . . . . . . . . . .  D  ADDR  00CAH  NOT USED
+RCLK . . . . . . . . . . . . . . . .  B  ADDR  00CDH  NOT USED
+RD . . . . . . . . . . . . . . . . .  B  ADDR  00B7H  NOT USED
+REN. . . . . . . . . . . . . . . . .  B  ADDR  009CH  NOT USED
+RESET. . . . . . . . . . . . . . . .  C  ADDR  0000H  NOT USED
+RI . . . . . . . . . . . . . . . . .  B  ADDR  0098H  NOT USED
+RS0. . . . . . . . . . . . . . . . .  B  ADDR  00D3H  NOT USED
+RS1. . . . . . . . . . . . . . . . .  B  ADDR  00D4H  NOT USED
+RXD. . . . . . . . . . . . . . . . .  B  ADDR  00B0H  NOT USED
+SADDR. . . . . . . . . . . . . . . .  D  ADDR  00A9H  NOT USED
+SADDR_0. . . . . . . . . . . . . . .  D  ADDR  00A9H  NOT USED
+SADDR_1. . . . . . . . . . . . . . .  D  ADDR  00AAH  NOT USED
+SADEN. . . . . . . . . . . . . . . .  D  ADDR  00B9H  NOT USED
+SADEN_0. . . . . . . . . . . . . . .  D  ADDR  00B9H  NOT USED
+SADEN_1. . . . . . . . . . . . . . .  D  ADDR  00BAH  NOT USED
+SBUF . . . . . . . . . . . . . . . .  D  ADDR  0099H  NOT USED
+SCON . . . . . . . . . . . . . . . .  D  ADDR  0098H  NOT USED
+SINT . . . . . . . . . . . . . . . .  C  ADDR  0023H  NOT USED
+SM0. . . . . . . . . . . . . . . . .  B  ADDR  009FH  NOT USED
+SM1. . . . . . . . . . . . . . . . .  B  ADDR  009EH  NOT USED
+SM2. . . . . . . . . . . . . . . . .  B  ADDR  009DH  NOT USED
+SP . . . . . . . . . . . . . . . . .  D  ADDR  0081H  NOT USED
+SPCON. . . . . . . . . . . . . . . .  D  ADDR  00C3H  NOT USED
+SPCR . . . . . . . . . . . . . . . .  D  ADDR  00D5H  NOT USED
+SPDAT. . . . . . . . . . . . . . . .  D  ADDR  00C5H  NOT USED
+SPDR . . . . . . . . . . . . . . . .  D  ADDR  0086H  NOT USED
+SPSR . . . . . . . . . . . . . . . .  D  ADDR  00AAH  NOT USED
+SPSTA. . . . . . . . . . . . . . . .  D  ADDR  00C4H  NOT USED
+START. . . . . . . . . . . . . . . .  C  ADDR  0010H
+START_1. . . . . . . . . . . . . . .  C  ADDR  0019H
+START_2. . . . . . . . . . . . . . .  C  ADDR  0028H
+START_BUD_1. . . . . . . . . . . . .  C  ADDR  001CH  NOT USED
+START_BUD_2. . . . . . . . . . . . .  C  ADDR  0022H
+T0 . . . . . . . . . . . . . . . . .  B  ADDR  00B4H  NOT USED
+T1 . . . . . . . . . . . . . . . . .  B  ADDR  00B5H  NOT USED
+T2CON. . . . . . . . . . . . . . . .  D  ADDR  00C8H  NOT USED
+T2MOD. . . . . . . . . . . . . . . .  D  ADDR  00C9H  NOT USED
+TB8. . . . . . . . . . . . . . . . .  B  ADDR  009BH  NOT USED
+TCLK . . . . . . . . . . . . . . . .  B  ADDR  00CCH  NOT USED
+TCON . . . . . . . . . . . . . . . .  D  ADDR  0088H  NOT USED
+TF0. . . . . . . . . . . . . . . . .  B  ADDR  008DH  NOT USED
+TF1. . . . . . . . . . . . . . . . .  B  ADDR  008FH  NOT USED
+TF2. . . . . . . . . . . . . . . . .  B  ADDR  00CFH  NOT USED
+TH0. . . . . . . . . . . . . . . . .  D  ADDR  008CH  NOT USED
+TH1. . . . . . . . . . . . . . . . .  D  ADDR  008DH  NOT USED
+TH2. . . . . . . . . . . . . . . . .  D  ADDR  00CDH  NOT USED
+TI . . . . . . . . . . . . . . . . .  B  ADDR  0099H  NOT USED
+TIMER0 . . . . . . . . . . . . . . .  C  ADDR  000BH  NOT USED
+TIMER1 . . . . . . . . . . . . . . .  C  ADDR  001BH  NOT USED
+TIMER2 . . . . . . . . . . . . . . .  C  ADDR  002BH  NOT USED
+TL0. . . . . . . . . . . . . . . . .  D  ADDR  008AH  NOT USED
+TL1. . . . . . . . . . . . . . . . .  D  ADDR  008BH  NOT USED
+TL2. . . . . . . . . . . . . . . . .  D  ADDR  00CCH  NOT USED
+TMOD . . . . . . . . . . . . . . . .  D  ADDR  0089H  NOT USED
+TR0. . . . . . . . . . . . . . . . .  B  ADDR  008CH  NOT USED
+TR1. . . . . . . . . . . . . . . . .  B  ADDR  008EH  NOT USED
+TR2. . . . . . . . . . . . . . . . .  B  ADDR  00CAH  NOT USED
+TXD. . . . . . . . . . . . . . . . .  B  ADDR  00B1H  NOT USED
+VYPOCET. . . . . . . . . . . . . . .  C  ADDR  0042H
+WDTCON . . . . . . . . . . . . . . .  D  ADDR  00A7H  NOT USED
+WDTPRG . . . . . . . . . . . . . . .  D  ADDR  00A7H  NOT USED
+WDTRST . . . . . . . . . . . . . . .  D  ADDR  00A6H  NOT USED
+WR . . . . . . . . . . . . . . . . .  B  ADDR  00B6H  NOT USED
+ZAC. . . . . . . . . . . . . . . . .  C  ADDR  0000H
+ZOBRAT_MIN_SEK . . . . . . . . . . .  C  ADDR  00DBH
+ZOBRAZ . . . . . . . . . . . . . . .  C  ADDR  00FAH
+ZOBRAZ_BUDIK . . . . . . . . . . . .  C  ADDR  009EH
+ZOBRAZ_BUDIK_PR. . . . . . . . . . .  C  ADDR  00BDH
+ZP . . . . . . . . . . . . . . . . .  C  ADDR  013DH
